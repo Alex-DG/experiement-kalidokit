@@ -1,25 +1,23 @@
 import Stats from 'stats.js'
 
-var stats = new Stats()
-console.log({ stats })
+// Debug
+const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-//Import Helper Functions from Kalidokit
+// Import Helper Functions from Kalidokit
 const remap = Kalidokit.Utils.remap
 const clamp = Kalidokit.Utils.clamp
 const lerp = Kalidokit.Vector.lerp
 
-/* THREEJS WORLD SETUP */
+/* THREEJS WORLD SETUP  */
 let currentVrm
 
-// renderer
 const renderer = new THREE.WebGLRenderer({ alpha: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 document.body.appendChild(renderer.domElement)
 
-// camera
 const orbitCamera = new THREE.PerspectiveCamera(
   35,
   window.innerWidth / window.innerHeight,
@@ -28,30 +26,26 @@ const orbitCamera = new THREE.PerspectiveCamera(
 )
 orbitCamera.position.set(0.0, 1.4, 4)
 
-// controls
 const orbitControls = new THREE.OrbitControls(orbitCamera, renderer.domElement)
 orbitControls.screenSpacePanning = true
 orbitControls.target.set(0.0, 1.1, 0.0)
 orbitControls.update()
 
-// scene
 const scene = new THREE.Scene()
 
-// light
-const light = new THREE.DirectionalLight(0xffffff)
+const light = new THREE.DirectionalLight(0xffffff, 1.5)
 light.position.set(1.0, 1.0, 1.0).normalize()
 scene.add(light)
 
-// Main Render Loop
 const clock = new THREE.Clock()
 
 function animate() {
   stats.begin()
 
-  // if (currentVrm) {
-  //   // Update model to render physics
-  //   currentVrm.update(clock.getDelta())
-  // }
+  if (currentVrm) {
+    // Update model to render physics
+    currentVrm.update(clock.getDelta())
+  }
   renderer.render(scene, orbitCamera)
 
   stats.end()
@@ -67,8 +61,6 @@ const loader = new THREE.GLTFLoader()
 loader.crossOrigin = 'anonymous'
 
 const url = '/avatar/model_final.vrm'
-// const url  =
-//   'https://cdn.glitch.com/29e07830-2317-4b15-a044-135e73c7f840%2FAshtra.vrm?v=1630342336981'
 
 // Import model from URL, add your own model here
 loader.load(
@@ -91,7 +83,7 @@ loader.load(
       '%'
     ),
 
-  (error) => console.error(error)
+  (error) => console.error('Loading error: ', { error })
 )
 
 // Animate Rotation Helper function
@@ -101,9 +93,8 @@ const rigRotation = (
   dampener = 1,
   lerpAmount = 0.3
 ) => {
-  if (!currentVrm) {
-    return
-  }
+  if (!currentVrm) return
+
   const Part = currentVrm.humanoid.getBoneNode(
     THREE.VRMSchema.HumanoidBoneName[name]
   )
@@ -146,9 +137,8 @@ const rigPosition = (
 
 let oldLookTarget = new THREE.Euler()
 const rigFace = (riggedFace) => {
-  if (!currentVrm) {
-    return
-  }
+  if (!currentVrm) return
+
   rigRotation('Neck', riggedFace.head, 0.7)
 
   // Blendshapes and Preset Name Schema
@@ -207,11 +197,10 @@ const rigFace = (riggedFace) => {
   currentVrm.lookAt.applyer.lookAt(lookTarget)
 }
 
-// /* VRM Character Animator */
+// VRM Character Animator
 const animateVRM = (vrm, results) => {
-  if (!vrm) {
-    return
-  }
+  if (!vrm) return
+
   // Take the results from `Holistic` and animate character based on its Face, Pose, and Hand Keypoints.
   let riggedPose, riggedLeftHand, riggedRightHand, riggedFace
 
@@ -331,7 +320,7 @@ const animateVRM = (vrm, results) => {
   }
 }
 
-/* SETUP MEDIAPIPE HOLISTIC INSTANCE */
+// SETUP MEDIAPIPE HOLISTIC INSTANCE
 let videoElement = document.querySelector('.input_video')
 let guideCanvas = document.querySelector('canvas.guides')
 
@@ -344,12 +333,14 @@ const onResults = (results) => {
   animateVRM(currentVrm, results)
 }
 
+/**
+ * HOLISTIC API
+ */
 // const holistic = new Holistic({
 //   locateFile: (file) => {
 //     return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1635989137/${file}`
 //   },
 // })
-
 // holistic.setOptions({
 //   modelComplexity: 1,
 //   smoothLandmarks: true,
@@ -360,6 +351,9 @@ const onResults = (results) => {
 // // Pass holistic a callback function
 // holistic.onResults(onResults)
 
+/**
+ * POSE API
+ */
 const pose = new Pose({
   locateFile: (file) => {
     return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
@@ -423,13 +417,13 @@ const drawResults = (results) => {
   })
 }
 
-// // Use `Mediapipe` utils to get camera - lower resolution = higher fps
+// Use `Mediapipe` utils to get camera - lower resolution = higher fps
 const camera = new Camera(videoElement, {
   onFrame: async () => {
     // await holistic.send({ image: videoElement })
     await pose.send({ image: videoElement })
   },
-  width: 640,
-  height: 480,
+  width: 320,
+  height: 240,
 })
 camera.start()
