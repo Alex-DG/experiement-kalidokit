@@ -6,6 +6,12 @@ Kalidokit+Mediapipe+Three.js: position tracking demo
 
 - Both Holistic and Pose APIs are in the code uncomment the one you want to use
 
+
+
+https://user-images.githubusercontent.com/4311684/202046010-4dd22f0d-b4e0-4168-b86f-e6dcc0f9981d.mp4
+
+
+
 ## Setup
 
 Run the following commands:
