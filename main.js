@@ -42,10 +42,7 @@ const clock = new THREE.Clock()
 function animate() {
   stats.begin()
 
-  if (currentVrm) {
-    // Update model to render physics
-    currentVrm.update(clock.getDelta())
-  }
+  currentVrm?.update(clock.getDelta())
   renderer.render(scene, orbitCamera)
 
   stats.end()
@@ -67,7 +64,6 @@ loader.load(
   url,
 
   (gltf) => {
-    console.log({ gltf })
     THREE.VRMUtils.removeUnnecessaryJoints(gltf.scene)
     THREE.VRM.from(gltf).then((vrm) => {
       scene.add(vrm.scene)
@@ -328,8 +324,6 @@ const onResults = (results) => {
   // Draw landmark guides
   drawResults(results)
   // Animate model
-
-  // console.log({ results })
   animateVRM(currentVrm, results)
 }
 
@@ -417,11 +411,23 @@ const drawResults = (results) => {
   })
 }
 
+let count = 0
+let sending = false
+
 // Use `Mediapipe` utils to get camera - lower resolution = higher fps
 const camera = new Camera(videoElement, {
   onFrame: async () => {
     // await holistic.send({ image: videoElement })
-    await pose.send({ image: videoElement })
+    count += 1
+    if (!sending && count === 10) {
+      sending = true
+
+      console.log('update!!', count)
+      await pose.send({ image: videoElement })
+
+      sending = false
+      count = 0
+    }
   },
   width: 320,
   height: 240,
